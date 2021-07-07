@@ -1,0 +1,3 @@
+python-dotenv >= 0.18.0
+requests >= 2.25.1
+atcoder-tools >= 2.5.0
