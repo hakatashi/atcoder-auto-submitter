@@ -1,0 +1,5 @@
+[codestyle]
+workspace_dir='workspace'
+[etc]
+download_without_login=false
+parallel_download=false
