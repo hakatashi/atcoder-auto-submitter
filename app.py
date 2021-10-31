@@ -5,6 +5,7 @@ import os
 from atcodertools.common.logging import logger_io, logger
 from atcodertools.codegen.template_engine import render
 from onlinejudge_command.main import get_parser as oj_get_parser, run_program as oj_run_program
+from tempfile import NamedTemporaryFile
 import requests
 import json
 from atcoder import get_prompt, get_template
@@ -86,16 +87,17 @@ def submit_code(code, execution_log, candidates, choice, contest, problem_id):
 
   submission = render(template, code=code, execution_log=execution_log,
                       candidates=candidates, choice=choice)
-  filename = f'submission{choice}.py'
-  with open(filename, 'w') as f:
-    f.write(submission)
 
-  args = ['submit', f'https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem_id}',
-          filename, '--wait', '0', '--yes']
+  with NamedTemporaryFile() as f:
+    filename = f.name
+    f.write(submission.encode())
 
-  parser = oj_get_parser()
-  parsed = parser.parse_args(args=args)
-  return oj_run_program(parsed, parser=parser)
+    args = ['submit', f'https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem_id}',
+            filename, '--wait', '0', '--yes', '--language', 'python']
+
+    parser = oj_get_parser()
+    parsed = parser.parse_args(args=args)
+    return oj_run_program(parsed, parser=parser)
 
 
 def download_tests(contest, problem_id):
@@ -125,16 +127,17 @@ def verify_code(code, execution_log, candidates, choice, contest, problem_id):
 
   submission = render(template, code=code, execution_log=execution_log,
                       candidates=candidates, choice=choice)
-  filename = f'submission_{contest}_{problem_id}_{choice}.py'
-  with open(filename, 'w') as f:
-    f.write(submission)
 
-  args = ['test', '--command', f'python {filename}', '--directory',
-          f'tests/{contest}_{problem_id}', '--mle', '50', '--tle', '1']
+  with NamedTemporaryFile() as f:
+    filename = f.name
+    f.write(submission.encode())
 
-  parser = oj_get_parser()
-  logger.info(f'Verifying candidate {choice}...')
-  exit_code = oj_run_program(parser.parse_args(args=args), parser=parser)
+    args = ['test', '--command', f'python {filename}', '--directory',
+            f'tests/{contest}_{problem_id}', '--mle', '50', '--tle', '1']
+
+    parser = oj_get_parser()
+    logger.info(f'Verifying candidate {choice}...')
+    exit_code = oj_run_program(parser.parse_args(args=args), parser=parser)
 
   logger.info(f'Verification finished. exit code = {exit_code}')
   return exit_code
