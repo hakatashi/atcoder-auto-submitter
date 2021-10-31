@@ -1,5 +1,7 @@
 python-dotenv >= 0.18.0
 requests >= 2.25.1
-atcoder-tools >= 2.5.0
+../atcoder-tools
+../oj
 beautifulsoup4 >= 4.9.3
 schedule >= 1.1.0
+googletrans >= 3.1.0a0

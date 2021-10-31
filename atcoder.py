@@ -1,8 +1,10 @@
-from re import template
 from atcodertools.tools.envgen import main as envgen_main
 from bs4 import BeautifulSoup
-from atcodertools.common.logging import logger_io, logger
+from atcodertools.common.logging import logger
 from pathlib import Path
+from googletrans import Translator
+
+translator = Translator()
 
 def flatmap(f, xs):
   ys = []
@@ -16,8 +18,10 @@ def find_index(f, xs):
       return i
   return -1
 
-def get_template(contest, problem_index):
+def get_template(contest, problem_id, translate=False):
   logger.info('Invoking atcoder-tools...')
+
+  problem_index = ord(problem_id) - ord('a')
 
   res = envgen_main(
     "python a.py",
@@ -27,7 +31,7 @@ def get_template(contest, problem_index):
 
   problem_a_html = res[0].original_html
   soup = BeautifulSoup(problem_a_html, features="lxml")
-  en_descriptions = soup.find("span", {"class": "lang-en"})
+  en_descriptions = soup.find("span", {"class": "lang-ja"})
   en_sections = en_descriptions.findAll("div", {"class": "part"})
   en_statement = en_sections[0]
 
@@ -49,7 +53,7 @@ def get_template(contest, problem_index):
         en_statement_lines.extend(map(lambda el: f'* {el.get_text()}', li_elements))
       elif tag.name == 'ol':
         en_statement_lines.extend(map(
-          lambda i, el: f'{i + 1}. {el.get_text()}',
+          lambda d: f'{d[0] + 1}. {d[1].get_text()}',
           enumerate(li_elements)
         ))
   
@@ -61,6 +65,12 @@ def get_template(contest, problem_index):
         en_statement_lines.extend(tag.get_text().split('\r\n'))
 
   logger.info(f'Problem statement extracted: {en_statement_lines}')
+
+  if translate:
+    logger.info(f'Translating statement...')
+    translation_result = translator.translate('\n'.join(en_statement_lines))
+    logger.info(f'Translation succeeded: {translation_result.text.splitlines()}')
+    en_statement_lines = translation_result.text.splitlines()
 
   template_path = Path('workspace', contest, chr(ord('A') + problem_index), 'main.py')
   with template_path.open() as f:
@@ -74,7 +84,7 @@ def get_template(contest, problem_index):
   solve_function_definition_index = find_index(lambda line: 'solve' in line, template_lines)
   solve_function_definition = template_lines[solve_function_definition_index]
 
-  logger.info(f'Extracted the definition of solve function: {solve_function_definition}')
+  logger.info(f'Extracted the definition of solve function: {solve_function_definition.strip()}')
 
   intro_lines = template_lines[:solve_function_definition_index]
   outro_lines = template_lines[solve_function_definition_index+2:]
@@ -86,10 +96,12 @@ def normalize_statement_line(line):
     .replace('\\neq', '!=') \
     .replace('\\,', ' ') \
     .replace('\\times', 'x') \
-    .replace('\\le', '<') \
     .replace('\\leq', '<=') \
-    .replace('\\ge', '>') \
+    .replace('\\le', '<=') \
+    .replace('\\lt', '<') \
     .replace('\\geq', '>=') \
+    .replace('\\ge', '>=') \
+    .replace('\\gt', '>') \
     .replace('\\dots', '...') \
     .replace('\\cdots', '...') \
     .replace('\\ldots', '...') \
@@ -101,10 +113,7 @@ def get_prompt(en_statement_lines, intro_lines, solve_function_definition):
   statement_lines = map(normalize_statement_line, en_statement_lines)
   comment_lines = list(map(lambda line: f'# {line}\n', statement_lines))
 
-  tag_lines = [
-    '/ Language: python\n',
-    '// Path: solve.py\n',
-  ]
+  tag_lines = []
 
   prompt_lines = tag_lines + intro_lines + comment_lines + [solve_function_definition]
   notag_prompt_lines = intro_lines + comment_lines + [solve_function_definition]

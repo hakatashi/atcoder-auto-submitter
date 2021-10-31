@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 workspace
+tests
 submission*.py
