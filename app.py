@@ -12,22 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dotenv import load_dotenv
 import re
-from time import sleep
 import os
+import json
+from time import sleep
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from pathlib import Path
+from dotenv import load_dotenv
 from atcodertools.common.logging import logger_io, logger
 from atcodertools.codegen.template_engine import render
 from onlinejudge_command.main import get_parser as oj_get_parser, run_program as oj_run_program
-from tempfile import NamedTemporaryFile
 import requests
-import json
 from atcoder import get_prompt, get_template
-import shutil
 
 load_dotenv()
 OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
 
+dirname = Path(__file__).parent
 
 def get_completions(prompt, token, testcases, completion_endpoint, completion_parameter):
   data = {
@@ -95,7 +96,7 @@ def get_fingerprint(func):
 
 
 def submit_code(code, execution_log, candidates, choice, contest, problem_id):
-  with open('template.py') as f:
+  with open(dirname / 'template.py') as f:
     template = f.read()
   execution_log = re.sub(r"'+", "'", execution_log)
 
@@ -116,11 +117,9 @@ def submit_code(code, execution_log, candidates, choice, contest, problem_id):
 
 def download_tests(contest, problem_id):
   url = f'https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem_id}'
-  testdir = f'tests/{contest}_{problem_id}'
 
-  if os.path.exists(testdir):
-    shutil.rmtree(testdir)
-  args = ['download', url, '--directory', testdir]
+  testdir = TemporaryDirectory()
+  args = ['download', url, '--directory', testdir.name]
 
   parser = oj_get_parser()
   while True:
@@ -133,9 +132,11 @@ def download_tests(contest, problem_id):
 
   logger.info('Test cases downloaded.')
 
+  return testdir
 
-def verify_code(code, execution_log, candidates, choice, contest, problem_id):
-  with open('template.py') as f:
+
+def verify_code(code, execution_log, candidates, choice, testdir):
+  with open(dirname / 'template.py') as f:
     template = f.read()
   execution_log = re.sub(r"'+", "'", execution_log)
 
@@ -146,8 +147,8 @@ def verify_code(code, execution_log, candidates, choice, contest, problem_id):
     filename = f.name
     f.write(submission.encode())
 
-    args = ['test', '--command', f'python {filename}', '--directory',
-            f'tests/{contest}_{problem_id}', '--mle', '50', '--tle', '1']
+    args = ['test', '--command', f'python {filename}',
+            '--directory', testdir.name, '--mle', '50', '--tle', '1']
 
     parser = oj_get_parser()
     logger.info(f'Verifying candidate {choice}...')
@@ -227,7 +228,7 @@ def run_with_test(problem_id,
         candidates.append((i, result))
         fingerprints.add(fingerprint)
 
-    download_tests(contest_id, problem_id)
+    testdir = download_tests(contest_id, problem_id)
 
     for choice, result in candidates:
       outro = ''.join(outro_lines)
@@ -239,7 +240,7 @@ def run_with_test(problem_id,
       code = header + notag_prompt + result + outro
 
       execution_log = logger_io.getvalue()
-      exit_code = verify_code(code, execution_log, all_candidates, choice, contest_id, problem_id)
+      exit_code = verify_code(code, execution_log, all_candidates, choice, testdir)
       if exit_code != 0:
         logger.info('Test didn\'t pass. Trying another candidate...')
         continue
@@ -254,4 +255,5 @@ def run_with_test(problem_id,
         logger.info('Submission failed. Trying after 0.5s...')
         sleep(0.5)
       logger.info('Submission succeeded.')
+      testdir.cleanup()
       return 0

@@ -1,4 +1,24 @@
-# atcoder-auto-submitter-by-copilot
+# atcoder-auto-submitter
+
+## Setup
+
+1. Install this module and [atcoder-tools](https://github.com/kyuridenamida/atcoder-tools).
+
+    ```
+    pip install atcoder-auto-submitter atcoder-tools
+    ```
+
+2. Make sure you are logged in with atcoder-tools.
+
+    ```
+    atcoder-tools gen abc001
+    ```
+
+3. Have fun!
+
+    ```
+    atcoder-auto-submitter abc222 a
+    ```
 
 ## Usage
 

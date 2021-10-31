@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from atcodertools.tools.envgen import main as envgen_main
-from bs4 import BeautifulSoup
-from atcodertools.common.logging import logger
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from bs4 import BeautifulSoup
+from atcodertools.tools.envgen import main as envgen_main
+from atcodertools.common.logging import logger
 from googletrans import Translator
 
 translator = Translator()
-
+dirname = Path(__file__).parent
 
 def flatmap(f, xs):
   ys = []
@@ -39,10 +40,11 @@ def get_template(contest, problem_id, language='en', translate=False):
   logger.info('Invoking atcoder-tools...')
 
   problem_index = ord(problem_id) - ord('a')
+  workspace_dir = TemporaryDirectory()
 
   res = envgen_main(
       "python a.py",
-      [contest, "--lang", "python", "--config", ".atcodertools.toml"],
+      [contest, "--lang", "python", "--config", str((dirname / ".atcodertools.toml").resolve()), '--workspace', workspace_dir.name],
       problem_index
   )
 
@@ -91,11 +93,12 @@ def get_template(contest, problem_id, language='en', translate=False):
     logger.info(f'Translation succeeded: {translation_result.text.splitlines()}')
     en_statement_lines = translation_result.text.splitlines()
 
-  template_path = Path('workspace', contest, chr(ord('A') + problem_index), 'main.py')
+  template_path = Path(workspace_dir.name, contest, chr(ord('A') + problem_index), 'main.py')
   with template_path.open() as f:
     template_lines = list(f)
 
   logger.info('Read generated code from atcoder-tools.')
+  workspace_dir.cleanup()
 
   # Strips shebang
   template_lines = template_lines[1:]
