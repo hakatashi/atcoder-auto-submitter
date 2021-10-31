@@ -18,7 +18,7 @@ def find_index(f, xs):
       return i
   return -1
 
-def get_template(contest, problem_id, translate=False):
+def get_template(contest, problem_id, language='en', translate=False):
   logger.info('Invoking atcoder-tools...')
 
   problem_index = ord(problem_id) - ord('a')
@@ -31,7 +31,9 @@ def get_template(contest, problem_id, translate=False):
 
   problem_a_html = res[0].original_html
   soup = BeautifulSoup(problem_a_html, features="lxml")
-  en_descriptions = soup.find("span", {"class": "lang-ja"})
+  en_descriptions = soup.find("span", {"class": f'lang-{language}'})
+  if en_descriptions is None:
+    raise Exception(f'Statement with language = {language} not found')
   en_sections = en_descriptions.findAll("div", {"class": "part"})
   en_statement = en_sections[0]
 

@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import schedule
 import re
 from time import sleep
 import os
@@ -9,32 +8,16 @@ from onlinejudge_command.main import get_parser as oj_get_parser, run_program as
 import requests
 import json
 from atcoder import get_prompt, get_template
-import sys
 import shutil
 
-if len(sys.argv) < 3:
-  print('Usage: python app.py [contest] [problem index]')
-  sys.exit()
-
-contest = sys.argv[1]
-problem_id = sys.argv[2]
-
-logger.info(f'Loaded config: contest = {contest}')
-logger.info(f'Loaded config: problem id = {problem_id}')
-
 load_dotenv()
-
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
 
-def get_completions(prompt, token, n):
+def get_completions(prompt, token, testcases, completion_endpoint, completion_parameter):
   data = {
+    **completion_parameter,
     "prompt": prompt,
-    "max_tokens": 500,
-    "temperature": 0.3,
-    "top_p": 1,
-    "n": n,
-    "logprobs": 2,
+    "n": testcases,
     "stop": ["\n\n\n"],
     "stream": True,
   }
@@ -46,17 +29,11 @@ def get_completions(prompt, token, n):
     "Accept": "application/json",
   }
 
-  # COPILOT_COMPLETION = 'https://copilot.githubassets.com/v1/engines/github-multi-stochbpe-cushman-pii/completions'
-  # COPILOT_COMPLETION = 'https://copilot-proxy.githubassets.com/v1/engines/github-py-stochbpe-cushman-pii/completions'
-  # COPILOT_COMPLETION = 'https://copilot-proxy.githubusercontent.com/v1/engines/github-py-stochbpe-cushman-pii/completions'
-  COPILOT_COMPLETION = 'https://api.openai.com/v1/engines/davinci-codex/completions'
-
   logger.info('Getting completion from OpenAI Codex...')
-  with requests.post(COPILOT_COMPLETION, json=data, headers=headers) as req:
+  # TODO: Process as stream
+  with requests.post(completion_endpoint, json=data, headers=headers) as req:
     response_data = req.text
   logger.info('Successfully retrieved completion data from OpenAI Codex.')
-
-  print(response_data)
 
   outputs = {}
 
@@ -135,8 +112,6 @@ def download_tests(contest, problem_id):
   logger.info('Test cases downloaded.')
 
 def verify_code(code, execution_log, candidates, choice, contest, problem_id):
-  url = f'https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem_id}'
-
   with open('template.py') as f:
     template = f.read()
   execution_log = re.sub(r"'+", "'", execution_log)
@@ -155,13 +130,14 @@ def verify_code(code, execution_log, candidates, choice, contest, problem_id):
   logger.info(f'Verification finished. exit code = {exit_code}')
   return exit_code
 
-def run_without_test(problem_id, contest):
-  logger.info(f'job started (contest = {contest}, problem id = {problem_id})')
-  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(contest, problem_id)
+def run_without_test(problem_id,
+        contest_id, testcases, completion_endpoint, completion_parameter, language,
+        translate):
+  logger.info(f'job started (contest = {contest_id}, problem id = {problem_id})')
+  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(contest_id, problem_id, language, translate)
   prompt, notag_prompt = get_prompt(en_statement_lines, intro_lines, solve_function_definition)
-  print(prompt)
 
-  results = get_completions(prompt, OPENAI_TOKEN, 5)
+  results = get_completions(prompt, OPENAI_TOKEN, testcases, completion_endpoint, completion_parameter)
   fingerprints = set()
   all_candidates = []
   candidates = []
@@ -188,7 +164,7 @@ def run_without_test(problem_id, contest):
     code = header + notag_prompt + result + outro
 
     while True:
-      exit_code = submit_code(code, execution_log, all_candidates, choice, contest, problem_id)
+      exit_code = submit_code(code, execution_log, all_candidates, choice, contest_id, problem_id)
       if exit_code == 0:
         break
       logger.info('submission failed. Trying after 0.5s...')
@@ -196,13 +172,15 @@ def run_without_test(problem_id, contest):
 
     logger.info('submission succeeded.')
 
-def run_with_test(problem_id, contest, testcases):
-  logger.info(f'job started (contest = {contest}, problem id = {problem_id})')
-  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(contest, problem_id, translate=True)
+def run_with_test(problem_id,
+        contest_id, testcases, completion_endpoint, completion_parameter, language,
+        translate):
+  logger.info(f'job started (contest = {contest_id}, problem id = {problem_id})')
+  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(contest_id, problem_id, language, translate)
   prompt, notag_prompt = get_prompt(en_statement_lines, intro_lines, solve_function_definition)
 
   while True:
-    results = get_completions(prompt, OPENAI_TOKEN, testcases)
+    results = get_completions(prompt, OPENAI_TOKEN, testcases, completion_endpoint, completion_parameter)
     fingerprints = set()
     all_candidates = []
     candidates = []
@@ -216,7 +194,7 @@ def run_with_test(problem_id, contest, testcases):
         candidates.append((i, result))
         fingerprints.add(fingerprint)
 
-    download_tests(contest, problem_id)
+    download_tests(contest_id, problem_id)
 
     for choice, result in candidates:
       outro = ''.join(outro_lines)
@@ -227,7 +205,7 @@ def run_with_test(problem_id, contest, testcases):
       code = header + notag_prompt + result + outro
 
       execution_log = logger_io.getvalue()
-      exit_code = verify_code(code, execution_log, all_candidates, choice, contest, problem_id)
+      exit_code = verify_code(code, execution_log, all_candidates, choice, contest_id, problem_id)
       if exit_code != 0:
         logger.info('Test didn\'t pass. Trying another candidate...')
         continue
@@ -236,26 +214,10 @@ def run_with_test(problem_id, contest, testcases):
 
       while True:
         execution_log = logger_io.getvalue()
-        exit_code = submit_code(code, execution_log, all_candidates, choice, contest, problem_id)
+        exit_code = submit_code(code, execution_log, all_candidates, choice, contest_id, problem_id)
         if exit_code == 0:
           break
         logger.info('Submission failed. Trying after 0.5s...')
         sleep(0.5)
       logger.info('Submission succeeded.')
       return 0
-
-def job(problem_id, contest):
-  if problem_id == 'a':
-    run_with_test(problem_id, contest, testcases=5)
-  else:
-    run_with_test(problem_id, contest, testcases=20)
-
-logger.info('Waiting for the beginning of the contest...')
-
-schedule.every().day.at("21:00").do(job, problem_id=problem_id, contest=contest)
-job(problem_id=problem_id, contest=contest)
-
-while True:
-  schedule.run_pending()
-  sleep(0.1)
-
