@@ -6,11 +6,13 @@ from googletrans import Translator
 
 translator = Translator()
 
+
 def flatmap(f, xs):
   ys = []
   for x in xs:
     ys.extend(f(x))
   return ys
+
 
 def find_index(f, xs):
   for i, x in enumerate(xs):
@@ -18,15 +20,16 @@ def find_index(f, xs):
       return i
   return -1
 
+
 def get_template(contest, problem_id, language='en', translate=False):
   logger.info('Invoking atcoder-tools...')
 
   problem_index = ord(problem_id) - ord('a')
 
   res = envgen_main(
-    "python a.py",
-    [contest, "--lang", "python", "--config", ".atcodertools.toml"],
-    problem_index
+      "python a.py",
+      [contest, "--lang", "python", "--config", ".atcodertools.toml"],
+      problem_index
   )
 
   problem_a_html = res[0].original_html
@@ -55,10 +58,10 @@ def get_template(contest, problem_id, language='en', translate=False):
         en_statement_lines.extend(map(lambda el: f'* {el.get_text()}', li_elements))
       elif tag.name == 'ol':
         en_statement_lines.extend(map(
-          lambda d: f'{d[0] + 1}. {d[1].get_text()}',
-          enumerate(li_elements)
+            lambda d: f'{d[0] + 1}. {d[1].get_text()}',
+            enumerate(li_elements)
         ))
-  
+
   if en_output_section is not None:
     codes = en_output_section.find('code')
     if codes is not None or '-1' in en_output_section.get_text():
@@ -93,23 +96,25 @@ def get_template(contest, problem_id, language='en', translate=False):
 
   return en_statement_lines, intro_lines, solve_function_definition, outro_lines
 
+
 def normalize_statement_line(line):
   return line \
-    .replace('\\neq', '!=') \
-    .replace('\\,', ' ') \
-    .replace('\\times', 'x') \
-    .replace('\\leq', '<=') \
-    .replace('\\le', '<=') \
-    .replace('\\lt', '<') \
-    .replace('\\geq', '>=') \
-    .replace('\\ge', '>=') \
-    .replace('\\gt', '>') \
-    .replace('\\dots', '...') \
-    .replace('\\cdots', '...') \
-    .replace('\\ldots', '...') \
-    .replace('^', ' ** ') \
-    .replace('\\mathrm', '') \
-    .strip()
+      .replace('\\neq', '!=') \
+      .replace('\\,', ' ') \
+      .replace('\\times', 'x') \
+      .replace('\\leq', '<=') \
+      .replace('\\le', '<=') \
+      .replace('\\lt', '<') \
+      .replace('\\geq', '>=') \
+      .replace('\\ge', '>=') \
+      .replace('\\gt', '>') \
+      .replace('\\dots', '...') \
+      .replace('\\cdots', '...') \
+      .replace('\\ldots', '...') \
+      .replace('^', ' ** ') \
+      .replace('\\mathrm', '') \
+      .strip()
+
 
 def get_prompt(en_statement_lines, intro_lines, solve_function_definition):
   statement_lines = map(normalize_statement_line, en_statement_lines)
@@ -120,4 +125,3 @@ def get_prompt(en_statement_lines, intro_lines, solve_function_definition):
   prompt_lines = tag_lines + intro_lines + comment_lines + [solve_function_definition]
   notag_prompt_lines = intro_lines + comment_lines + [solve_function_definition]
   return ''.join(prompt_lines).strip(), ''.join(notag_prompt_lines).strip()
-

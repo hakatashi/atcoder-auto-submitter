@@ -13,20 +13,21 @@ import shutil
 load_dotenv()
 OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
 
+
 def get_completions(prompt, token, testcases, completion_endpoint, completion_parameter):
   data = {
-    **completion_parameter,
-    "prompt": prompt,
-    "n": testcases,
-    "stop": ["\n\n\n"],
-    "stream": True,
+      **completion_parameter,
+      "prompt": prompt,
+      "n": testcases,
+      "stop": ["\n\n\n"],
+      "stream": True,
   }
 
   headers = {
-    'Authorization': f'Bearer {token}',
-    "OpenAI-Intent": "copilot-ghost",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
+      'Authorization': f'Bearer {token}',
+      "OpenAI-Intent": "copilot-ghost",
+      "Content-Type": "application/json",
+      "Accept": "application/json",
   }
 
   logger.info('Getting completion from OpenAI Codex...')
@@ -57,6 +58,7 @@ def get_completions(prompt, token, testcases, completion_endpoint, completion_pa
 
   return list(outputs.values())
 
+
 def get_function(solve_function_definition, output):
   lines = output.splitlines()
   ret = [solve_function_definition.strip()]
@@ -70,27 +72,31 @@ def get_function(solve_function_definition, output):
 
   return '\n'.join(ret)
 
+
 def get_fingerprint(func):
   func = re.sub(r'#.+$', '', func, flags=re.M)
   func = re.sub(r'[\s()]', '', func)
   return func
+
 
 def submit_code(code, execution_log, candidates, choice, contest, problem_id):
   with open('template.py') as f:
     template = f.read()
   execution_log = re.sub(r"'+", "'", execution_log)
 
-  submission = render(template, code=code, execution_log=execution_log, candidates=candidates, choice=choice)
+  submission = render(template, code=code, execution_log=execution_log,
+                      candidates=candidates, choice=choice)
   filename = f'submission{choice}.py'
   with open(filename, 'w') as f:
     f.write(submission)
 
   args = ['submit', f'https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem_id}',
-    filename, '--wait', '0', '--yes']
+          filename, '--wait', '0', '--yes']
 
   parser = oj_get_parser()
   parsed = parser.parse_args(args=args)
   return oj_run_program(parsed, parser=parser)
+
 
 def download_tests(contest, problem_id):
   url = f'https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem_id}'
@@ -111,17 +117,20 @@ def download_tests(contest, problem_id):
 
   logger.info('Test cases downloaded.')
 
+
 def verify_code(code, execution_log, candidates, choice, contest, problem_id):
   with open('template.py') as f:
     template = f.read()
   execution_log = re.sub(r"'+", "'", execution_log)
 
-  submission = render(template, code=code, execution_log=execution_log, candidates=candidates, choice=choice)
+  submission = render(template, code=code, execution_log=execution_log,
+                      candidates=candidates, choice=choice)
   filename = f'submission_{contest}_{problem_id}_{choice}.py'
   with open(filename, 'w') as f:
     f.write(submission)
 
-  args = ['test', '--command', f'python {filename}', '--directory', f'tests/{contest}_{problem_id}', '--mle', '50', '--tle', '1']
+  args = ['test', '--command', f'python {filename}', '--directory',
+          f'tests/{contest}_{problem_id}', '--mle', '50', '--tle', '1']
 
   parser = oj_get_parser()
   logger.info(f'Verifying candidate {choice}...')
@@ -130,14 +139,17 @@ def verify_code(code, execution_log, candidates, choice, contest, problem_id):
   logger.info(f'Verification finished. exit code = {exit_code}')
   return exit_code
 
+
 def run_without_test(problem_id,
-        contest_id, testcases, completion_endpoint, completion_parameter, language,
-        translate):
+                     contest_id, testcases, completion_endpoint, completion_parameter, language,
+                     translate):
   logger.info(f'job started (contest = {contest_id}, problem id = {problem_id})')
-  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(contest_id, problem_id, language, translate)
+  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(
+      contest_id, problem_id, language, translate)
   prompt, notag_prompt = get_prompt(en_statement_lines, intro_lines, solve_function_definition)
 
-  results = get_completions(prompt, OPENAI_TOKEN, testcases, completion_endpoint, completion_parameter)
+  results = get_completions(prompt, OPENAI_TOKEN, testcases,
+                            completion_endpoint, completion_parameter)
   fingerprints = set()
   all_candidates = []
   candidates = []
@@ -159,7 +171,8 @@ def run_without_test(problem_id,
     outro = ''.join(outro_lines)
     if 'print' not in result:
       outro = re.sub(r'^(\s*)(solve\(.*\))$', r'\1print(\2)', outro, flags=re.M)
-    additional_libraries = ['math', 're', 'bisect', 'collections', 'heapq', 'itertools', 'functools', 'fractions', 'numpy as np', 'numpy']
+    additional_libraries = ['math', 're', 'bisect', 'collections', 'heapq',
+                            'itertools', 'functools', 'fractions', 'numpy as np', 'numpy']
     header = ''.join(map(lambda l: f'import {l}\n', additional_libraries))
     code = header + notag_prompt + result + outro
 
@@ -172,15 +185,18 @@ def run_without_test(problem_id,
 
     logger.info('submission succeeded.')
 
+
 def run_with_test(problem_id,
-        contest_id, testcases, completion_endpoint, completion_parameter, language,
-        translate):
+                  contest_id, testcases, completion_endpoint, completion_parameter, language,
+                  translate):
   logger.info(f'job started (contest = {contest_id}, problem id = {problem_id})')
-  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(contest_id, problem_id, language, translate)
+  en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(
+      contest_id, problem_id, language, translate)
   prompt, notag_prompt = get_prompt(en_statement_lines, intro_lines, solve_function_definition)
 
   while True:
-    results = get_completions(prompt, OPENAI_TOKEN, testcases, completion_endpoint, completion_parameter)
+    results = get_completions(prompt, OPENAI_TOKEN, testcases,
+                              completion_endpoint, completion_parameter)
     fingerprints = set()
     all_candidates = []
     candidates = []
@@ -200,7 +216,8 @@ def run_with_test(problem_id,
       outro = ''.join(outro_lines)
       if 'print' not in result:
         outro = re.sub(r'^(\s*)(solve\(.*\))$', r'\1print(\2)', outro, flags=re.M)
-      additional_libraries = ['math', 're', 'bisect', 'collections', 'heapq', 'itertools', 'functools', 'fractions', 'numpy as np', 'numpy']
+      additional_libraries = ['math', 're', 'bisect', 'collections', 'heapq',
+                              'itertools', 'functools', 'fractions', 'numpy as np', 'numpy']
       header = ''.join(map(lambda l: f'import {l}\n', additional_libraries))
       code = header + notag_prompt + result + outro
 

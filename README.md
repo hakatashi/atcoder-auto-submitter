@@ -12,7 +12,7 @@ usage: main.py [-h] [--run_at HH:MM] [--testcases N] [--language {en,ja}]
                [--frequency-penalty FREQUENCY_PENALTY] [--best-of BEST_OF]
                contest_id problem_id
 
-Fully-automated code submitter backed by OpenAI Codex.
+Fully-automated AtCoder submitter backed by OpenAI Codex.
 
 positional arguments:
   contest_id            Contest ID (e.g. abc001)

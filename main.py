@@ -24,7 +24,7 @@ def job(
 
 def main(prog, args):
   parser = argparse.ArgumentParser(
-      description='Fully-automated code submitter backed by OpenAI Codex.', prog=prog)
+      description='Fully-automated AtCoder submitter backed by OpenAI Codex.', prog=prog)
   parser.add_argument('contest_id', help='Contest ID (e.g. abc001)')
   parser.add_argument('problem_id', help='Problem ID (e.g. a)')
   parser.add_argument(
