@@ -14,7 +14,15 @@
     atcoder-tools gen abc001
     ```
 
-3. Have fun!
+3. Store necessary API keys into `~/.config/atcoder-auto-submitter/.env`
+
+    ```
+    mkdir -p ~/.config/atcoder-auto-submitter
+    curl -L https://github.com/hakatashi/atcoder-auto-submitter/raw/main/.env.example -o ~/.config/atcoder-auto-submitter/.env
+    vi ~/.config/atcoder-auto-submitter/.env
+    ```
+
+4. Have fun!
 
     ```
     atcoder-auto-submitter abc222 a
