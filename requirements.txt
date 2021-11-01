@@ -1,7 +1,7 @@
+git+https://github.com/hakatashi/oj.git@master#egg=online-judge-tools
+git+https://github.com/hakatashi/atcoder-tools.git@stable#egg=atcoder-tools
 python-dotenv >= 0.18.0
 requests >= 2.25.1
-../atcoder-tools
-../oj
 beautifulsoup4 >= 4.9.3
 schedule >= 1.1.0
 googletrans >= 3.1.0a0
