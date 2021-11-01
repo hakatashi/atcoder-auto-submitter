@@ -25,7 +25,7 @@ from onlinejudge_command.main import get_parser as oj_get_parser, run_program as
 import requests
 from atcoder import get_prompt, get_template
 
-load_dotenv()
+load_dotenv(dotenv_path=Path.home() / '.config/atcoder-auto-submitter/.env')
 OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
 
 dirname = Path(__file__).parent
@@ -161,6 +161,10 @@ def verify_code(code, execution_log, candidates, choice, testdir):
 def run_without_test(problem_id,
                      contest_id, testcases, completion_endpoint, completion_parameter, language,
                      translate):
+  if OPENAI_TOKEN is None:
+    logger.critical('OPENAI_TOKEN is not set')
+    exit(1)
+
   logger.info(f'job started (contest = {contest_id}, problem id = {problem_id})')
   en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(
       contest_id, problem_id, language, translate)
@@ -207,6 +211,10 @@ def run_without_test(problem_id,
 def run_with_test(problem_id,
                   contest_id, testcases, completion_endpoint, completion_parameter, language,
                   translate):
+  if OPENAI_TOKEN is None:
+    logger.critical('OPENAI_TOKEN is not set')
+    exit(1)
+
   logger.info(f'job started (contest = {contest_id}, problem id = {problem_id})')
   en_statement_lines, intro_lines, solve_function_definition, outro_lines = get_template(
       contest_id, problem_id, language, translate)
