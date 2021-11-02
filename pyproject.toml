@@ -26,7 +26,7 @@ Jinja2 = "^3.0.2"
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
-atcoder-auto-submitter = 'atcoder_auto_submitter:main'
+atcoder-auto-submitter = 'atcoder_auto_submitter.main:main'
 
 [build-system]
 requires = ["poetry>=1.1.11"]
