@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "atcoder-auto-submitter"
+version = "1.0.0"
+description = "Fully-automated AtCoder submitter backed by OpenAI Codex."
+
+license = "Apache-2.0"
+
+authors = [
+    "Google LLC",
+    "Koki Takahashi <hakatasiloving@gmail.com>"
+]
+
+readme = "README.md"
+
+repository = "https://github.com/hakatashi/atcoder-auto-submitter"
+homepage = "https://github.com/hakatashi/atcoder-auto-submitter"
+
+keywords = ["atcoder", "codex"]
+
+[tool.poetry.dependencies]
+python = ">= 3.9"
+pendulum = { version = "^1.4", optional = true }
+python-dotenv = ">=0.18.0"
+requests = ">=2.25.1"
+beautifulsoup4 = ">=4.9.3"
+schedule = ">=1.1.0"
+googletrans = ">=3.1.0a0"
+online-judge-tools = { git = "https://github.com/hakatashi/oj.git", branch = "master" }
+atcoder-tools = { git = "https://github.com/hakatashi/atcoder-tools.git", branch = "master" }
+Jinja2 = "^3.0.2"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+atcoder-auto-submitter = 'atcoder_auto_submitter:main'
