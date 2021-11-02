@@ -1,11 +1,13 @@
 # atcoder-auto-submitter
 
+Fully-automated AtCoder submitter backed by OpenAI Codex.
+
 ## Setup
 
 1. Install this module and [atcoder-tools](https://github.com/kyuridenamida/atcoder-tools).
 
     ```
-    pip install atcoder-auto-submitter atcoder-tools
+    pip install git+https://github.com/hakatashi/atcoder-auto-submitter atcoder-tools
     ```
 
 2. Make sure you are logged in with atcoder-tools.
@@ -31,14 +33,15 @@
 ## Usage
 
 ```
-$ python main.py --help
-usage: main.py [-h] [--run_at HH:MM] [--testcases N] [--language {en,ja}]
-               [--translate | --no-translate] [--test | --no-test]
-               [--completion-endpoint URL] [--max-tokens MAX_TOKENS]
-               [--temperature TEMPERATURE] [--top-p TOP_P] [--logprobs LOGPROBS]
-               [--presence-penalty PRESENCE_PENALTY]
-               [--frequency-penalty FREQUENCY_PENALTY] [--best-of BEST_OF]
-               contest_id problem_id
+$ atcoder-auto-submitter --help
+usage: atcoder-auto-submitter
+       [-h] [--run_at HH:MM] [--testcases N] [--language {en,ja}]
+       [--translate | --no-translate] [--test | --no-test]
+       [--completion-endpoint URL] [--max-tokens MAX_TOKENS]
+       [--temperature TEMPERATURE] [--top-p TOP_P] [--logprobs LOGPROBS]
+       [--presence-penalty PRESENCE_PENALTY]
+       [--frequency-penalty FREQUENCY_PENALTY] [--best-of BEST_OF]
+       contest_id problem_id
 
 Fully-automated AtCoder submitter backed by OpenAI Codex.
 
@@ -48,10 +51,12 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --run_at HH:MM        Schedule execution of this program at the time specified.
-                        If not specified, this program runs immediately.
+  --run_at HH:MM        Schedule execution of this program at the time
+                        specified. If not specified, this program runs
+                        immediately.
   --testcases N         The number of testcases retrieved from Codex at once.
-  --language {en,ja}    The target language extracted from the problem statement.
+  --language {en,ja}    The target language extracted from the problem
+                        statement.
   --translate, --no-translate
                         If specified, the submitter will try to translate given
                         statement to English using Google Translate. (default:
