@@ -14,7 +14,7 @@
 
 import argparse
 import sys
-from app import run_without_test, run_with_test
+from atcoder_auto_submitter.app import run_without_test, run_with_test
 from atcodertools.common.logging import logger
 import schedule
 from time import sleep
@@ -36,7 +36,10 @@ def job(
                      translate=translate)
 
 
-def main(prog, args):
+def main():
+  prog = sys.argv[0]
+  args = sys.argv[1:]
+
   parser = argparse.ArgumentParser(
       description='Fully-automated AtCoder submitter backed by OpenAI Codex.', prog=prog)
   parser.add_argument('contest_id', help='Contest ID (e.g. abc001)')
@@ -113,4 +116,4 @@ def main(prog, args):
 
 
 if __name__ == "__main__":
-  main(sys.argv[0], sys.argv[1:])
+  main()

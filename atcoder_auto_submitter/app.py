@@ -23,7 +23,7 @@ from atcodertools.common.logging import logger_io, logger
 from atcodertools.codegen.template_engine import render
 from onlinejudge_command.main import get_parser as oj_get_parser, run_program as oj_run_program
 import requests
-from atcoder import get_prompt, get_template
+from atcoder_auto_submitter.atcoder import get_prompt, get_template
 
 load_dotenv(dotenv_path=Path.home() / '.config/atcoder-auto-submitter/.env')
 OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
