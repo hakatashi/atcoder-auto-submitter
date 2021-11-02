@@ -2,6 +2,8 @@
 
 Fully-automated AtCoder submitter backed by OpenAI Codex.
 
+This is not an officially supported Google product.
+
 ## Setup
 
 1. Install this module and [atcoder-tools](https://github.com/kyuridenamida/atcoder-tools).
