@@ -136,7 +136,7 @@ def download_tests(contest, problem_id):
 
 
 def verify_code(code, execution_log, candidates, choice, testdir):
-  with open(dirname / 'template.py') as f:
+  with open(dirname / 'template.py.jinja') as f:
     template = f.read()
   execution_log = re.sub(r"'+", "'", execution_log)
 
