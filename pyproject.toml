@@ -22,7 +22,7 @@ googletrans = ">=3.1.0a0"
 online-judge-tools = { git = "https://github.com/hakatashi/oj.git", branch = "master" }
 atcoder-tools = { git = "https://github.com/hakatashi/atcoder-tools.git", branch = "master" }
 Jinja2 = "^3.1.2"
-urllib3 = "1.26.9"
+urllib3 = "1.26.10"
 
 [tool.poetry.dev-dependencies]
 
