@@ -4,6 +4,16 @@ Fully-automated AtCoder submitter backed by OpenAI Codex.
 
 This is not an officially supported Google product.
 
+## ⚠Deprecation Notice⚠
+
+Due to the rule changes made by AtCoder on June 7, 2024, using this tool during AtCoder Beginners Contest will be a violation of the contest rules. For details, please see "[Rule changes in ABC due to the rise of generative AI.](https://atcoder.jp/posts/1246)"
+
+In addition, since this tool has no intended use other than taking the fastest in ABC, this repository will be deprecated and archived.
+
+2024年6月7日のAtCoder社のルール変更に伴い、AtCoder Beginners Contest の開催中に本ツールを利用することはコンテストのルール違反となります。詳しくは『[生成AIの台頭に伴うABCにおけるルール変更について](https://atcoder.jp/posts/1246)』をご覧ください。
+
+なお、本ツールはABCのFastestを取る以外の想定用途がないことから、このリポジトリはdeprecateとし、アーカイブいたします。
+
 ## Setup
 
 1. Install this module and [atcoder-tools](https://github.com/kyuridenamida/atcoder-tools).
